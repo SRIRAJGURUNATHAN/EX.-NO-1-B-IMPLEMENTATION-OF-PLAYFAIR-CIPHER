@@ -19,146 +19,70 @@ STEP-5: Display the obtained cipher text.
 ```
 #include <stdio.h>
 #include <string.h>
-#include <ctype.h>
 
-void toLowerCase(char *text) {
-    for (int i = 0; text[i]; i++) {
-        text[i] = tolower(text[i]);
-    }
-}
-
-void removeSpaces(char *text) {
-    int count = 0;
-    for (int i = 0; text[i]; i++) {
-        if (text[i] != ' ') {
-            text[count++] = text[i];
+void matrixMultiplication(unsigned int res[], unsigned int mat[3][3], unsigned int vec[], int size) {
+    int i, j;
+    for (i = 0; i < 3; i++) {
+        res[i] = 0;
+        for (j = 0; j < 3; j++) {
+            res[i] += mat[i][j] * vec[j];
         }
+        res[i] = res[i] % 26; // Ensure result is within alphabet bounds
     }
-    text[count] = '\0';
-}
-
-void diagraph(char *text, char digraphs[][2]) {
-    int i = 0, k = 0;
-    while (text[i] != '\0') {
-        digraphs[k][0] = text[i];
-        if (text[i + 1] == '\0' || text[i] == text[i + 1]) {
-            digraphs[k][1] = 'x';
-            i++;
-        } else {
-            digraphs[k][1] = text[i + 1];
-            i += 2;
-        }
-        k++;
-    }
-}
-
-void fillerLetter(char *text) {
-    if (strlen(text) % 2 != 0) {
-        strcat(text, "x");
-    }
-}
-
-void generateKeyTable(char *key, char keyTable[5][5], char *list1) {
-    int dict[26] = {0};
-    int k = 0;
-
-    // Fill key letters
-    for (int i = 0; key[i]; i++) {
-        if (key[i] != 'j' && dict[key[i] - 'a'] == 0) {
-            keyTable[k / 5][k % 5] = key[i];
-            dict[key[i] - 'a'] = 1;
-            k++;
-        }
-    }
-
-    // Fill remaining letters
-    for (int i = 0; list1[i]; i++) {
-        if (list1[i] != 'j' && dict[list1[i] - 'a'] == 0) {
-            keyTable[k / 5][k % 5] = list1[i];
-            dict[list1[i] - 'a'] = 1;
-            k++;
-        }
-    }
-}
-
-void search(char keyTable[5][5], char ch, int *row, int *col) {
-    for (int i = 0; i < 5; i++) {
-        for (int j = 0; j < 5; j++) {
-            if (keyTable[i][j] == ch) {
-                *row = i;
-                *col = j;
-                return;
-            }
-        }
-    }
-}
-
-void encryptRowRule(char keyTable[5][5], int e1r, int e1c, int e2r, int e2c, char *c1, char *c2) {
-    *c1 = keyTable[e1r][(e1c + 1) % 5];
-    *c2 = keyTable[e2r][(e2c + 1) % 5];
-}
-
-void encryptColumnRule(char keyTable[5][5], int e1r, int e1c, int e2r, int e2c, char *c1, char *c2) {
-    *c1 = keyTable[(e1r + 1) % 5][e1c];
-    *c2 = keyTable[(e2r + 1) % 5][e2c];
-}
-
-void encryptRectangleRule(char keyTable[5][5], int e1r, int e1c, int e2r, int e2c, char *c1, char *c2) {
-    *c1 = keyTable[e1r][e2c];
-    *c2 = keyTable[e2r][e1c];
-}
-
-void encryptByPlayfairCipher(char keyTable[5][5], char digraphs[][2], int size, char *cipherText) {
-    char c1, c2;
-    int e1r, e1c, e2r, e2c;
-    
-    for (int i = 0; i < size; i++) {
-        search(keyTable, digraphs[i][0], &e1r, &e1c);
-        search(keyTable, digraphs[i][1], &e2r, &e2c);
-
-        if (e1r == e2r) {
-            encryptRowRule(keyTable, e1r, e1c, e2r, e2c, &c1, &c2);
-        } else if (e1c == e2c) {
-            encryptColumnRule(keyTable, e1r, e1c, e2r, e2c, &c1, &c2);
-        } else {
-            encryptRectangleRule(keyTable, e1r, e1c, e2r, e2c, &c1, &c2);
-        }
-
-        cipherText[2 * i] = c1;
-        cipherText[2 * i + 1] = c2;
-    }
-    cipherText[2 * size] = '\0';
 }
 
 int main() {
-    char text_Plain[] = "instruments";
-    char key[] = "Monarchy";
-    char list1[] = "abcdefghiklmnopqrstuvwxyz";
-    char digraphs[10][2]; // Max size is half the length of text_Plain
-    char keyTable[5][5];
-    char cipherText[20]; // Max length is 2 * length of digraphs
-
-    toLowerCase(text_Plain);
-    removeSpaces(text_Plain);
-    fillerLetter(text_Plain);
-    diagraph(text_Plain, digraphs);
-
-    generateKeyTable(key, keyTable, list1);
+    unsigned int a[3][3] = { {6, 24, 1}, {13, 16, 10}, {20, 17, 15} }; // Encryption key
+    unsigned int b[3][3] = { {8, 5, 10}, {21, 8, 21}, {21, 12, 8} }; // Decryption key
+    int i, len;
+    unsigned int c[20], d[20];
+    char msg[20];
     
-    int size = strlen(text_Plain) / 2;
-    encryptByPlayfairCipher(keyTable, digraphs, size, cipherText);
-
-    printf("Key text: %s\n", key);
-    printf("Plain Text: %s\n", text_Plain);
-    printf("CipherText: %s\n", cipherText);
-
+    printf("Enter plain text: ");
+    scanf("%s", msg);
+    
+    len = strlen(msg);
+    
+    // Ensure the message length is a multiple of 3 by padding with 'X'
+    while (len % 3 != 0) {
+        msg[len++] = 'X';
+    }
+    msg[len] = '\0'; // Null terminate the string
+    
+    printf("Padded plain text: %s\n", msg);
+    
+    // Convert plaintext to numerical values (A=0, B=1, ..., Z=25)
+    for (i = 0; i < len; i++) {
+        c[i] = msg[i] - 'A';
+    }
+    
+    // Encrypt the message in blocks of 3 characters
+    printf("\nEncrypted Cipher Text :");
+    for (i = 0; i < len; i += 3) {
+        matrixMultiplication(d, a, &c[i], 3);
+        for (int j = 0; j < 3; j++) {
+            printf(" %c", d[j] + 'A');
+        }
+    }
+    
+    // Decrypt the message in blocks of 3 characters
+    printf("\nDecrypted Cipher Text :");
+    for (i = 0; i < len; i += 3) {
+        matrixMultiplication(c, b, &d[i], 3);
+        for (int j = 0; j < 3; j++) {
+            printf(" %c", c[j] + 'A');
+        }
+    }
+    
     return 0;
 }
+
 ```
 
 
 ## OUTPUT:
-![Screenshot 2024-09-04 101642](https://github.com/user-attachments/assets/370aa7b9-fdfb-497d-b8d7-d923ee8ab200)
+![image](https://github.com/user-attachments/assets/0a8bce4f-5d42-4d76-b45c-304548ec6971)
+
 
 ## RESULT:
   Thus the Playfair cipher substitution technique had been implemented successfully.
